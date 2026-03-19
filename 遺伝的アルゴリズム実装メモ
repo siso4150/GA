@@ -1,0 +1,22 @@
+遺伝的アルゴリズム　実装メモ
+
+・GeneticPool:遺伝子プール map,configの参照を持つ
+選択 selection()
+交差 crossover()
+突然変異 mutation()
+というかこのクラスがほぼ全てか？
+
+・Individual:各個体 map,configの参照を持つ
+・・構造体cell
+
+染色体配列 chrome<cell>　通ったグリッドセルを格納する
+累計距離 dist
+累計リスク risk
+
+・Map:マップ
+
+
+
+・config:ハイパーパラメータの保持
+
+
