@@ -14,17 +14,15 @@ struct point{
 class Individual{
 
 public:
-    Individual(config&);
-    Individual(config&,vector<point> route);
+    Individual();
+    Individual(vector<point> route);
 
     void setMetrics(double d, double r, double f){dist = d; risk = r; fitness = f;};
     double getFitness() const {return fitness;};
 
-    const vector<point>& getRoute(){return route;};
+    const vector<point>& getRoute() const {return route;};
 
 private:
-    config& cfg;
-
     vector<point> route;
     double risk;
     double dist;

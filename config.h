@@ -2,6 +2,7 @@
 
 struct config{
     double crossoverP;
+    
     double muationP;
 
     int maxPopulation;
@@ -9,6 +10,14 @@ struct config{
     int maxGeneration;
 
     int tournamentSize;
+
+    int maxH;
+    int maxW;
+
+    string mapCsv;//道路のcsv
+    string somCsv;//SOMのcsv
+
+    
 
 
 };

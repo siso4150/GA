@@ -15,7 +15,7 @@ public:
     GeneticPool(config&,meshmap&);
     void initGeneticPool();
     Individual selectionTornament();
-    void crossover();
+    vector<point> crossover(const Individual&,const Individual&);
     void mutation();
 
     void initialPopulation();//集団の初期化
@@ -23,8 +23,6 @@ public:
     vector<point> generateRandomPath(); //初期解の作成関数
 
     void evaluatePopulation();//集団の適応度を評価
-
-    
 
     void run();//実行関数
 
