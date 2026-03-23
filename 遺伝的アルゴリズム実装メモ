@@ -4,10 +4,19 @@
 選択 selection()
 交差 crossover()
 突然変異 mutation()
-というかこのクラスがほぼ全てか？
+
+
+初期個体群の生成 generateInitialPopulation() 
+
+初期解の生成:generateInitialRoute()
+
+染色体プール population<Individual>
+
 
 ・Individual:各個体 map,configの参照を持つ
-・・構造体cell
+・・構造体point
+
+
 
 染色体配列 chrome<cell>　通ったグリッドセルを格納する
 累計距離 dist
@@ -17,6 +26,4 @@
 
 
 
-・config:ハイパーパラメータの保持
-
-
+・config（構造体）:ハイパーパラメータの保持
