@@ -8,11 +8,76 @@ GeneticPool::GeneticPool(config& config, meshmap& meshmap):cfg(config),mp(meshma
 
 
 void GeneticPool::initialPopulation(){
-    for(int i = 0; i < cfg.maxPopulation;i++){
-        vector<point> initialRoute = generateRandomPath();
-        population.push_back(Individual(initialRoute));
+    while(population.size() < cfg.maxPopulation){
+        
+        vector<point> initialRoute = generateRandomRoute();
+        
+        if(!initialRoute.empty()){
+            population.push_back(Individual(initialRoute));
+        }
+
     }
 }
+
+
+vector<point> GeneticPool::getValidNeighbors(point currentPoint){
+    vector<point> neighbors;
+
+    for(int i = 0; i < dx.size();i++){
+        point next = {currentPoint.x + dx[i],currentPoint.y + dy[i]};
+        if(next.x >= 0 && next.x < cfg.maxW && next.y >= 0 && next.y < cfg.maxH && mp(next.y,next.x).isRoad){//mapはh,wだがこっちはx,yなので変な呼び出し方
+            neighbors.push_back(next);
+        }
+    }
+
+    return neighbors;
+}
+
+vector<point> GeneticPool::generateRandomRoute(){
+    vector<point> currentRoute;
+    currentRoute.push_back({cfg.startX,cfg.startY});
+    point currentPoint = {cfg.startX,cfg.startY};
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    int stepCount = 0;
+    int maxSteps = 1e5;
+
+    while ((currentPoint.x != cfg.goalX || currentPoint.y != cfg.goalY) && stepCount < maxSteps){
+        vector<point> neighbors = getValidNeighbors(currentPoint);
+
+        //行ける場所が無い時
+        if (neighbors.empty()) {
+            currentRoute.clear();
+            return currentRoute;
+        }
+
+        vector<double> weights;
+        for (const auto& neighbor : neighbors) {
+            int distance = calculateManhattanDistance(neighbor);
+            // 距離が短いほど重みを大きくする（ゼロ除算防止のため定数を加算）
+            weights.push_back(1.0 / (distance + 1.0));
+        }
+
+        discrete_distribution<> dist(weights.begin(), weights.end());
+        int selectedIndex = dist(gen);
+
+        currentPoint = neighbors[selectedIndex];
+        currentRoute.push_back(currentPoint);
+        stepCount++;
+
+    }
+
+    if (currentPoint.x != cfg.goalX || currentPoint.y != cfg.goalY) {
+        currentRoute.clear();
+    }
+
+    return currentRoute;
+
+} 
+
+
 
 Individual GeneticPool::selectionTornament(){
     std::random_device rd;
@@ -101,6 +166,55 @@ void GeneticPool::evaluatePopulation(){
     }
 }
 
+void GeneticPool::saveBestIndividual() {
+    if (population.empty()) return;
+
+    Individual bestIndividual = population[0];
+    double maxFitness = bestIndividual.getFitness();
+
+    for (size_t i = 1; i < population.size(); ++i) {
+        if (population[i].getFitness() > maxFitness) {
+            bestIndividual = population[i];
+            maxFitness = population[i].getFitness();
+        }
+    }
+
+    // 履歴の配列に追加
+    bestIndividualHistory.push_back(bestIndividual);
+}
+
+void GeneticPool::exportBestRoute(string& filePath){
+    if (bestIndividualHistory.empty()) {
+            return;
+        }
+
+    // 全世代を通じた最良個体を特定
+    Individual overallBest = bestIndividualHistory[0];
+    for (const auto& individual : bestIndividualHistory) {
+        if (individual.getFitness() > overallBest.getFitness()) {
+            overallBest = individual;
+        }
+    }
+
+    // ファイル出力の準備
+    std::ofstream outFile(filePath);
+    if (!outFile.is_open()) {
+        std::cerr << "File open error: " << filePath << "\n";
+        return;
+    }
+
+    // ヘッダ行の書き込み
+    outFile << "step,x,y\n";
+
+    // 経路座標の書き込み
+    const std::vector<point>& bestRoute = overallBest.getRoute();
+    for (size_t i = 0; i < bestRoute.size(); ++i) {
+        outFile << i << "," << bestRoute[i].x << "," << bestRoute[i].y << "\n";
+    }
+
+    outFile.close();
+}
+
 void GeneticPool::run(){
 
     //初期解の作成
@@ -111,6 +225,9 @@ void GeneticPool::run(){
 
         //集団の適応度の計算
         evaluatePopulation();
+
+        //世代の中で最も適応度の高い個体を保存
+        saveBestIndividual();
 
         vector<Individual> nextPopulation;
         
@@ -130,6 +247,12 @@ void GeneticPool::run(){
             nextPopulation.push_back(Individual(childRoute));
         }
 
+        //世代の更新
+        population = nextPopulation;
     }
+    
+    string outputFilePath = "best_route.csv";
+    exportBestRoute(outputFilePath);
+
 }
 

@@ -22,7 +22,7 @@ public:
     void initRisk();
 
 
-    cell& operator()(int x,int y){
+    cell& operator()(int y,int x){
         return map[y][x];
     }
     
