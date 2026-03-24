@@ -15,10 +15,10 @@ using namespace std;
 class GeneticPool{
 
 public:
-    GeneticPool(config&,meshmap&);
+    GeneticPool(const config&,meshmap&);
     void initGeneticPool();
     
-    //遺伝的オペレータ
+    //遺伝オペレータ
     Individual selectionTornament();
     vector<point> crossover(const Individual&,const Individual&);
     void mutation();
@@ -33,11 +33,13 @@ public:
     void run();//実行関数
 
 private:
-    config& cfg;
+    const config& cfg;
     meshmap& mp;
 
     vector<Individual> population;
     vector<Individual> bestIndividualHistory;//各世代の最良個体の履歴
+
+    mt19937 gen;//乱数生成器
 
     vector<point> getValidNeighbors(point);
     int calculateManhattanDistance(point currentPoint) {

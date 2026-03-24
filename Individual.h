@@ -19,6 +19,8 @@ public:
 
     void setMetrics(double d, double r, double f){dist = d; risk = r; fitness = f;};
     double getFitness() const {return fitness;};
+    double getDist() const {return dist;};
+    double getRisk() const {return risk;};
 
     const vector<point>& getRoute() const {return route;};
 

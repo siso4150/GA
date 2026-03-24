@@ -2,8 +2,9 @@
 #include "Individual.h"
 
 
-GeneticPool::GeneticPool(config& config, meshmap& meshmap):cfg(config),mp(meshmap){
-   
+GeneticPool::GeneticPool(const config& config, meshmap& meshmap):cfg(config),mp(meshmap){
+    std::random_device rd;
+    gen = std::mt19937(rd());
 }
 
 
@@ -15,7 +16,7 @@ void GeneticPool::initialPopulation(){
         if(!initialRoute.empty()){
             population.push_back(Individual(initialRoute));
         }
-
+        cout << "初期解 " << population.size() << " / " << cfg.maxPopulation << endl;
     }
 }
 
@@ -39,10 +40,9 @@ vector<point> GeneticPool::generateRandomRoute(){
     point currentPoint = {cfg.startX,cfg.startY};
 
     std::random_device rd;
-    std::mt19937 gen(rd());
 
     int stepCount = 0;
-    int maxSteps = 1e5;
+    int maxSteps = 1e9;
 
     while ((currentPoint.x != cfg.goalX || currentPoint.y != cfg.goalY) && stepCount < maxSteps){
         vector<point> neighbors = getValidNeighbors(currentPoint);
@@ -81,7 +81,6 @@ vector<point> GeneticPool::generateRandomRoute(){
 
 Individual GeneticPool::selectionTornament(){
     std::random_device rd;
-    std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, population.size() - 1);
 
     int best_index = dist(gen);
@@ -98,12 +97,14 @@ Individual GeneticPool::selectionTornament(){
             best_fitness = current_fitness;
         }
     }
+
+    return population[best_index];
 }
 
 vector<point> GeneticPool::crossover(const Individual& parent1, const Individual& parent2){
     vector<point> commonPoint;
-    vector<point> parentPath1 = parent1.getRoute();
-    vector<point> parentPath2 = parent2.getRoute();
+    const vector<point>& parentPath1 = parent1.getRoute();
+    const vector<point>& parentPath2 = parent2.getRoute();
 
     //交叉しているところがあるか探す
     for (size_t i = 1; i < parentPath1.size() - 1; ++i) {
@@ -223,11 +224,16 @@ void GeneticPool::run(){
     //世代ごとのループ
     for(int gen = 0; gen < cfg.maxGeneration; ++gen){
 
+        cout << gen+1 << "世代目 : ";
+
         //集団の適応度の計算
         evaluatePopulation();
 
         //世代の中で最も適応度の高い個体を保存
         saveBestIndividual();
+
+        cout << " 適応度 " << bestIndividualHistory.back().getFitness() << " 距離 " << bestIndividualHistory.back().getDist() << " "
+            << " リスク " << bestIndividualHistory.back().getRisk() << endl;
 
         vector<Individual> nextPopulation;
         
