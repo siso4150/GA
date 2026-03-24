@@ -146,8 +146,90 @@ vector<point> GeneticPool::crossover(const Individual& parent1, const Individual
     return childPath;
 }
 
-void GeneticPool::mutation(){
+void GeneticPool::mutation(vector<point>& currentRoute){
+    uniform_real_distribution<> probDist(0.0, 1.0);
+    
+    //突然変異確率が下回った時かつ、生成された経路が短い時は処理を終わらせる
+    if (probDist(gen) > cfg.mutationP || currentRoute.size() < 4) {
+        return;
+    }
+    
+    std::uniform_int_distribution<> indexDist(1, currentRoute.size() - 2);
+    int index1 = indexDist(gen);
+    int index2 = indexDist(gen);
 
+    if (index1 > index2) {
+        std::swap(index1, index2);
+    }
+    if (index2 - index1 < 2) {
+        return;
+    }
+
+    point startPoint = currentRoute[index1];
+    point endPoint = currentRoute[index2];
+
+    vector<point> newRoute = findLocalRoute(startPoint,endPoint);
+
+    if (!newRoute.empty()) {
+        std::vector<point> mutatedRoute;
+        
+        // 1. スタートからindex1までを保持
+        for (int i = 0; i <= index1; ++i) {
+            mutatedRoute.push_back(currentRoute[i]);
+        }
+        
+        // 2. 新しく生成した部分経路を挿入（両端の重複を防ぐ）
+        for (size_t i = 1; i < newRoute.size() - 1; ++i) {
+            mutatedRoute.push_back(newRoute[i]);
+        }
+        
+        // 3. index2からゴールまでを保持
+        for (size_t i = index2; i < currentRoute.size(); ++i) {
+            mutatedRoute.push_back(currentRoute[i]);
+        }
+        
+        // 個体の経路データを上書き
+        currentRoute = mutatedRoute;
+    }
+    return;
+}
+
+vector<point> GeneticPool::findLocalRoute(point startPoint,point endPoint){
+    vector<point> subRoute;
+    subRoute.push_back(startPoint);
+
+    point currentPoint = startPoint;
+    int stepCnt = 0;
+    int maxStep = 100;
+
+    while ((currentPoint.x != endPoint.x || currentPoint.y != endPoint.y) && stepCnt < maxStep) {
+        vector<point> neighbors = getValidNeighbors(currentPoint);
+
+        //行ける場所が無い時
+        if (neighbors.empty()) {
+            subRoute.clear();
+            return subRoute;
+        }
+
+        vector<double> weights;
+        for (const auto& neighbor : neighbors) {
+            int distance = calculateManhattanDistance(neighbor);
+            // 距離が短いほど重みを大きくする（ゼロ除算防止のため定数を加算）
+            weights.push_back(1.0 / (distance + 1.0));
+        }
+
+        discrete_distribution<> dist(weights.begin(), weights.end());
+        int selectedIndex = dist(gen);
+
+        currentPoint = neighbors[selectedIndex];
+        subRoute.push_back(currentPoint);
+        stepCnt++;
+
+    }
+
+    if (currentPoint.x != endPoint.x || currentPoint.y != endPoint.y) {
+        subRoute.clear();
+    }
 }
 
 void GeneticPool::evaluatePopulation(){
@@ -247,7 +329,7 @@ void GeneticPool::run(){
             vector<point> childRoute = crossover(parent1,parent2);
 
             // 突然変異
-
+            mutation(childRoute);
 
             //次世代プールに入れる
             nextPopulation.push_back(Individual(childRoute));
@@ -257,7 +339,7 @@ void GeneticPool::run(){
         population = nextPopulation;
     }
     
-    string outputFilePath = "best_route.csv";
+    string outputFilePath = "output_csv/best_route.csv";
     exportBestRoute(outputFilePath);
 
 }

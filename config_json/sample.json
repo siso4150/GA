@@ -1,5 +1,5 @@
 {
-    "maxPopulation" : 10,
+    "maxPopulation" : 50,
     "maxGeneration" : 100,
     "tornamentSize" : 4,
     "mutationP" : 0.1,

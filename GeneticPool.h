@@ -21,7 +21,7 @@ public:
     //遺伝オペレータ
     Individual selectionTornament();
     vector<point> crossover(const Individual&,const Individual&);
-    void mutation();
+    void mutation(vector<point>&);
 
     void initialPopulation();//集団の初期化
     vector<point> generateRandomRoute(); //初期解の作成関数
@@ -45,6 +45,8 @@ private:
     int calculateManhattanDistance(point currentPoint) {
         return std::abs(currentPoint.x - cfg.goalX) + std::abs(currentPoint.y - cfg.goalY);
     }
+
+    vector<point> findLocalRoute(point,point);
 
     void exportBestRoute(string&);
 
