@@ -240,7 +240,7 @@ void GeneticPool::evaluatePopulation(){
 
         //リスク、距離の計算をする
         for(point p : route){
-            risk += mp(p.x,p.y).riskVal;
+            risk += mp(p.y,p.x).riskVal;
         }
         dist = route.size();
 
